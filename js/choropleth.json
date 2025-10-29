@@ -1,0 +1,52 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "width": 1100,
+  "height": 740,
+  "projection": { "type": "mercator" },
+  "title": {
+    "text": "Choropleth Map of Emergency Stations in Victoria by LGA"
+  },
+  "data": {
+    "url": "js/VIC_shape_LGA.json",
+    "format": { "type": "topojson", "feature": "LGA_POLYGON" }
+  },
+
+  "transform": [
+    {
+      "lookup": "properties.LGA_NAME",          
+      "from": {
+        "data": { "url": "data/LGA_metrics.csv" },  
+        "key": "LGA_NAME",                           
+        "fields": [
+          "station_count",
+          "Population",
+          "area_km2",
+          "stations_per_10k",
+          "stations_per_1000km2",
+          "pop_density"
+        ]
+      }
+    },
+    { "calculate": "isValid(datum.station_count) ? datum.station_count : 0", "as": "station_count" }
+  ],
+
+  "mark": { "type": "geoshape", "stroke": "white", "strokeWidth": 0.8 },
+
+  "encoding": {
+    "color": {
+      "field": "station_count",
+      "type": "quantitative",
+      "scale": { "scheme": "blues" },
+      "title": "Number of Emergency Stations"
+    },
+    "tooltip": [
+      { "field": "properties.LGA_NAME", "title": "LGA" },
+      { "field": "station_count", "title": "Total Stations" },
+      { "field": "Population" },
+      { "field": "stations_per_10k", "title": "Stations / 10k people" },
+      { "field": "stations_per_1000km2", "title": "Stations / 1,000 km²" }
+    ]
+  },
+
+  "config": { "view": { "stroke": null }, "background": "white" }
+}
