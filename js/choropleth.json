@@ -2,51 +2,37 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "width": 1100,
   "height": 740,
-  "projection": { "type": "mercator" },
-  "title": {
-    "text": "Choropleth Map of Emergency Stations in Victoria by LGA"
-  },
+  "projection": {"type": "mercator"},
+  "title": {"text": "Choropleth – Population by LGA"},
   "data": {
     "url": "js/VIC_shape_LGA.json",
-    "format": { "type": "topojson", "feature": "LGA_POLYGON" }
+    "format": {"type": "topojson", "feature": "LGA_POLYGON"}
   },
-
   "transform": [
     {
-      "lookup": "properties.LGA_NAME",          
+      "lookup": "properties.LGA_NAME",
       "from": {
-        "data": { "url": "data/LGA_metrics.csv" },  
-        "key": "LGA_NAME",                           
-        "fields": [
-          "station_count",
-          "Population",
-          "area_km2",
-          "stations_per_10k",
-          "stations_per_1000km2",
-          "pop_density"
-        ]
+        "data": {"url": "data/pop_count_LGA.csv"},
+        "key": "LGA_NAME",
+        "fields": ["total_station_count","population"]
       }
     },
-    { "calculate": "isValid(datum.station_count) ? datum.station_count : 0", "as": "station_count" }
+    {"calculate": "toNumber(datum.total_station_count)", "as": "total_station_count_num"},
+    {"calculate": "toNumber(datum.population)", "as": "population_num"}
   ],
-
-  "mark": { "type": "geoshape", "stroke": "white", "strokeWidth": 0.8 },
-
+  "mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 0.8},
   "encoding": {
     "color": {
-      "field": "station_count",
+      "field": "population_num",
       "type": "quantitative",
-      "scale": { "scheme": "blues" },
-      "title": "Number of Emergency Stations"
+      "scale": {"scheme": "blues"},
+      "title": "Population"
     },
     "tooltip": [
-      { "field": "properties.LGA_NAME", "title": "LGA" },
-      { "field": "station_count", "title": "Total Stations" },
-      { "field": "Population" },
-      { "field": "stations_per_10k", "title": "Stations / 10k people" },
-      { "field": "stations_per_1000km2", "title": "Stations / 1,000 km²" }
+      {"field": "properties.LGA_NAME", "title": "LGA"},
+      {"field": "total_station_count_num", "title": "Total Stations"},
+      {"field": "population_num", "title": "Population"}
     ]
   },
-
-  "config": { "view": { "stroke": null }, "background": "white" }
+  "config": {"view": {"stroke": null}, "background": "white"}
 }
