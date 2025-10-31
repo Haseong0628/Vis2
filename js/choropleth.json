@@ -2,64 +2,108 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "width": 1100,
   "height": 740,
-  "projection": { "type": "mercator" },
-  "title": { "text": "Choropleth – choose metric" },
-
+  "projection": {
+    "type": "mercator",
+    "center": {"expr": "center_to"},
+    "scale": {"expr": "zoom_level"}
+  },
+  "title": { "text": "Victoria's Emergency Stations per Area and Population" },
   "data": {
     "url": "js/VIC_shape_LGA.json",
     "format": { "type": "topojson", "feature": "LGA_POLYGON" }
   },
-
   "params": [
     {
       "name": "metric_sel",
-      "value": "Population",
+      "value": "Stations / 1,000 km²",
       "bind": {
         "input": "select",
         "name": "Colour by: ",
-        "options": ["Population", "Total Stations"]
+        "options": [
+          "Stations / 1,000 km²",
+          "Stations / 100,000 people"
+        ]
+      }
+    },
+    {
+      "name": "zoom_level",
+      "value": 6000,
+      "bind": {
+        "input": "range",
+        "min": 3500,
+        "max": 45000,
+        "step": 100,
+        "name": "Zoom: "
+      }
+    },
+    {
+      "name": "center_to",
+      "value": [144.9631, -37.8136],
+      "bind": {
+        "input": "select",
+        "options": [
+          [144.9631, -37.8136],
+          [144.35, -38.15],
+          [144.28, -36.76]
+        ],
+        "labels": ["Melbourne CBD", "Geelong", "Bendigo"],
+        "name": "Map Centre: "
       }
     }
   ],
-
   "transform": [
     {
       "lookup": "properties.LGA_NAME",
       "from": {
         "data": { "url": "data/pop_count_LGA.csv" },
         "key": "LGA_NAME",
-        "fields": ["total_station_count", "population"]
+        "fields": [
+          "station_per_1000km2",
+          "station_per_100000"
+        ]
       }
     },
-    { "calculate": "toNumber(datum.total_station_count)", "as": "total_station_count_num" },
-    { "calculate": "toNumber(datum.population)", "as": "population_num" },
-
-    { "fold": ["population_num", "total_station_count_num"], "as": ["metric", "value"] },
+    { "calculate": "toNumber(datum.station_per_1000km2)", "as": "station_per_1000km2_num" },
+    { "calculate": "toNumber(datum.station_per_100000)", "as": "station_per_100000_num" },
     {
-      "calculate": "datum.metric == 'population_num' ? 'Population' : 'Total Stations'",
+      "fold": [
+        "station_per_1000km2_num",
+        "station_per_100000_num"
+      ],
+      "as": ["metric", "value"]
+    },
+    {
+      "calculate": "datum.metric === 'station_per_1000km2_num' ? 'Stations / 1,000 km²' : 'Stations / 100,000 people'",
       "as": "metric_label"
     },
-
-    { "filter": "datum.metric_label == metric_sel" }
+    { "filter": "datum.metric_label == metric_sel" },
+    {
+      "calculate": "datum.metric_label === 'Stations / 1,000 km²' ? (datum.value < 5 ? '<5' : datum.value < 10 ? '5–10' : datum.value < 25 ? '10–25' : datum.value < 75 ? '25–75' : datum.value < 125 ? '75–125' : '≥125') : (datum.value < 5 ? '<5' : datum.value < 10 ? '5–10' : datum.value < 50 ? '10–50' : datum.value < 150 ? '50–150' : datum.value < 400 ? '150–400' : '≥400')",
+      "as": "bin_label"
+    },
+    {
+      "calculate": "datum.metric_label === 'Stations / 1,000 km²' ? (datum.value < 5 ? 0 : datum.value < 10 ? 1 : datum.value < 25 ? 2 : datum.value < 75 ? 3 : datum.value < 125 ? 4 : 5) : (datum.value < 5 ? 0 : datum.value < 10 ? 1 : datum.value < 50 ? 2 : datum.value < 150 ? 3 : datum.value < 400 ? 4 : 5)",
+      "as": "bin_order"
+    }
   ],
-
   "mark": { "type": "geoshape", "stroke": "white", "strokeWidth": 0.8 },
-
   "encoding": {
     "color": {
-      "field": "value",
-      "type": "quantitative",
-      "scale": { "scheme": "blues" },
-      "title": "Selected metric"
+      "field": "bin_label",
+      "type": "nominal",
+      "title": "Legend",
+"scale": {
+  "range": ["#eaf3fb", "#bdd7e7", "#6baed6", "#3182bd", "#08519c", "#001a33"]
+}
+,
+      "sort": { "op": "min", "field": "bin_order" }
     },
     "tooltip": [
       { "field": "properties.LGA_NAME", "title": "LGA" },
-      { "field": "metric_label", "title": "Metric" },
-      { "field": "value", "title": "Value" },
-      { "field": "total_station_count_num", "title": "Total Stations (raw)" },
-      { "field": "population_num", "title": "Population (raw)" }
+      { "field": "bin_label", "title": "Bin" },
+      { "field": "station_per_1000km2_num", "title": "Stations / 1,000 km²" },
+      { "field": "station_per_100000_num", "title": "Stations / 100,000 people" }
     ]
   },
-
   "config": { "view": { "stroke": null }, "background": "white" }
 }
