@@ -2,37 +2,64 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "width": 1100,
   "height": 740,
-  "projection": {"type": "mercator"},
-  "title": {"text": "Choropleth – Population by LGA"},
+  "projection": { "type": "mercator" },
+  "title": { "text": "Choropleth – choose metric" },
+
   "data": {
     "url": "js/VIC_shape_LGA.json",
-    "format": {"type": "topojson", "feature": "LGA_POLYGON"}
+    "format": { "type": "topojson", "feature": "LGA_POLYGON" }
   },
+
+  "params": [
+    {
+      "name": "metric_sel",
+      "value": "Population",
+      "bind": {
+        "input": "select",
+        "name": "Colour by: ",
+        "options": ["Population", "Total Stations"]
+      }
+    }
+  ],
+
   "transform": [
     {
       "lookup": "properties.LGA_NAME",
       "from": {
-        "data": {"url": "data/pop_count_LGA.csv"},
+        "data": { "url": "data/pop_count_LGA.csv" },
         "key": "LGA_NAME",
-        "fields": ["total_station_count","population"]
+        "fields": ["total_station_count", "population"]
       }
     },
-    {"calculate": "toNumber(datum.total_station_count)", "as": "total_station_count_num"},
-    {"calculate": "toNumber(datum.population)", "as": "population_num"}
+    { "calculate": "toNumber(datum.total_station_count)", "as": "total_station_count_num" },
+    { "calculate": "toNumber(datum.population)", "as": "population_num" },
+
+    { "fold": ["population_num", "total_station_count_num"], "as": ["metric", "value"] },
+    {
+      "calculate": "datum.metric == 'population_num' ? 'Population' : 'Total Stations'",
+      "as": "metric_label"
+    },
+
+    { "filter": "datum.metric_label == metric_sel" }
   ],
-  "mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 0.8},
+
+  "mark": { "type": "geoshape", "stroke": "white", "strokeWidth": 0.8 },
+
   "encoding": {
     "color": {
-      "field": "population_num",
+      "field": "value",
       "type": "quantitative",
-      "scale": {"scheme": "blues"},
-      "title": "Population"
+      "scale": { "scheme": "blues" },
+      "title": "Selected metric"
     },
     "tooltip": [
-      {"field": "properties.LGA_NAME", "title": "LGA"},
-      {"field": "total_station_count_num", "title": "Total Stations"},
-      {"field": "population_num", "title": "Population"}
+      { "field": "properties.LGA_NAME", "title": "LGA" },
+      { "field": "metric_label", "title": "Metric" },
+      { "field": "value", "title": "Value" },
+      { "field": "total_station_count_num", "title": "Total Stations (raw)" },
+      { "field": "population_num", "title": "Population (raw)" }
     ]
   },
-  "config": {"view": {"stroke": null}, "background": "white"}
+
+  "config": { "view": { "stroke": null }, "background": "white" }
 }
