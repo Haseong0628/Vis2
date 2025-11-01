@@ -1,0 +1,134 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "width": 1100,
+  "height": 740,
+  "projection": {
+    "type": "mercator",
+    "center": {"expr": "center_to"},
+    "scale": {"expr": "zoom_level"}
+  },
+  "title": {"text": "Proportional Symbol Map — Emergency Stations by LGA"},
+
+  "params": [
+    {
+      "name": "size_sel",
+      "value": "Total Stations",
+      "bind": {
+        "input": "select",
+        "name": "Size by: ",
+        "options": ["Total Stations", "Fire Stations", "Police Stations", "Ambulance Stations"]
+      }
+    },
+    {
+      "name": "zoom_level",
+      "value": 6000,
+      "bind": {"input": "range", "min": 3500, "max": 45000, "step": 100, "name": "Zoom: "}
+    },
+    {
+      "name": "center_to",
+      "value": [144.9631, -37.8136],
+      "bind": {
+        "input": "select",
+        "options": [[144.9631,-37.8136],[144.35,-38.15],[144.28,-36.76]],
+        "labels": ["Melbourne CBD","Geelong","Bendigo"],
+        "name": "Map Centre: "
+      }
+    }
+  ],
+
+  "layer": [
+    {
+      "data": {
+        "url": "js/VIC_shape_LGA.json",
+        "format": {"type": "topojson", "feature": "LGA_POLYGON"}
+      },
+      "mark": {
+        "type": "geoshape",
+        "fill": "#14a80f",
+        "stroke": "#ffffff",
+        "strokeWidth": 0.8,
+        "opacity": 0.9
+      }
+    },
+
+    {
+      "data": {"url": "data/LGA_centre.csv"},
+      "transform": [
+        {
+          "lookup": "LGA_NAME",
+          "from": {
+            "data": {"url": "data/metro_LGA.csv"},
+            "key": "metro_LGA",
+            "fields": ["metro_LGA"]
+          },
+          "as": ["is_metro"]
+        },
+        {
+          "lookup": "LGA_NAME",
+          "from": {
+            "data": {"url": "data/pop_count_LGA.csv"},
+            "key": "LGA_NAME",
+            "fields": [
+              "total_station_count",
+              "fire_station_count",
+              "poli_station_count",
+              "ambu_station_count"
+            ]
+          }
+        },
+        { "calculate": "toNumber(datum.total_station_count)", "as": "total" },
+        { "calculate": "toNumber(datum.fire_station_count)", "as": "fire" },
+        { "calculate": "toNumber(datum.poli_station_count)", "as": "police" },
+        { "calculate": "toNumber(datum.ambu_station_count)", "as": "ambulance" },
+        { "calculate": "datum.is_metro != null ? 'Metro' : 'Rural'", "as": "region_type" },
+        {
+          "calculate": "size_sel == 'Total Stations' ? datum.total : size_sel == 'Fire Stations' ? datum.fire : size_sel == 'Police Stations' ? datum.police : datum.ambulance",
+          "as": "size_value"
+        },
+        {
+          "calculate": "datum.size_value < 5 ? '<5' : datum.size_value < 10 ? '5–9' : datum.size_value < 25 ? '10–24' : datum.size_value < 50 ? '25–49' : '≥50'",
+          "as": "size_bin_label"
+        },
+        { "filter": "isFinite(datum.size_value) && datum.size_value > 0" }
+      ],
+      "mark": { "type": "circle", "opacity": 0.85, "stroke": "white", "strokeWidth": 0.8 },
+      "encoding": {
+        "longitude": { "field": "X", "type": "quantitative" },
+        "latitude": { "field": "Y", "type": "quantitative" },
+
+        "size": {
+          "field": "size_bin_label",
+          "type": "nominal",
+          "title": "Station Count",
+          "scale": {
+            "domain": ["<5","5–9","10–24","25–49","≥50"],
+            "range":  [120, 400, 800, 1300, 1800]
+          },
+          "legend": { "symbolType": "circle" }
+        },
+
+        "color": {
+          "field": "region_type",
+          "type": "nominal",
+          "title": "Region Type",
+          "scale": {
+            "domain": ["Metro", "Rural"],
+            "range": ["#1f77b4", "#e3910e"]
+          }
+        },
+
+        "tooltip": [
+          { "field": "LGA_NAME", "title": "LGA" },
+          { "field": "region_type", "title": "Region" },
+          { "field": "size_bin_label", "title": "Size Bin" },
+          { "field": "total", "title": "Total Stations" },
+          { "field": "fire", "title": "Fire Stations" },
+          { "field": "police", "title": "Police Stations" },
+          { "field": "ambulance", "title": "Ambulance Stations" }
+        ]
+      }
+    }
+  ],
+
+  "config": { "view": { "stroke": null }, "background": "white" }
+}

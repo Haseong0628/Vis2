@@ -1,0 +1,78 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Emergency Stations by LGA — Metro vs Rural Coverage",
+  "width": 900,
+  "height": 560,
+  "data": { "url": "data/pop_count_LGA.csv" },
+
+  "transform": [
+    {
+      "lookup": "LGA_NAME",
+      "from": {
+        "data": { "url": "data/metro_LGA.csv" },
+        "key": "metro_LGA",
+        "fields": ["metro_LGA"]
+      },
+      "as": ["is_metro"]
+    },
+    { "calculate": "datum.is_metro != null ? 'Metro' : 'Rural'", "as": "region_type" },
+    { "filter": "region_toggle == datum.region_type" },
+    { "filter": "isFinite(toNumber(datum.station_per_1000km2)) && isFinite(toNumber(datum.station_per_100000)) && isFinite(toNumber(datum.total_station_count))" },
+    { "calculate": "toNumber(datum.station_per_1000km2)", "as": "per_area" },
+    { "calculate": "toNumber(datum.station_per_100000)", "as": "per_pop" },
+    { "calculate": "toNumber(datum.total_station_count)", "as": "total_stations" }
+  ],
+
+  "params": [
+    {
+      "name": "region_toggle",
+      "value": "Metro",
+      "bind": {
+        "input": "select",
+        "options": ["Metro", "Rural"],
+        "name": "Region: "
+      }
+    }
+  ],
+
+  "mark": { "type": "circle", "opacity": 0.8, "stroke": "white", "strokeWidth": 1 },
+
+  "encoding": {
+    "x": {
+      "field": "per_area",
+      "type": "quantitative",
+      "title": "Stations per 1,000 km²",
+      "scale": { "nice": true }
+    },
+    "y": {
+      "field": "per_pop",
+      "type": "quantitative",
+      "title": "Stations per 100,000 people",
+      "scale": { "nice": true }
+    },
+    "size": {
+      "field": "total_stations",
+      "type": "quantitative",
+      "title": "Total Stations",
+      "scale": { "range": [50, 1600] }
+    },
+    "color": {
+      "field": "region_type",
+      "type": "nominal",
+      "title": "Region",
+      "scale": {
+        "domain": ["Metro", "Rural"],
+        "range": ["#08519c", "#e3910e"]
+      }
+    },
+    "tooltip": [
+      { "field": "LGA_NAME", "title": "LGA" },
+      { "field": "region_type", "title": "Region" },
+      { "field": "total_stations", "title": "Total Stations" },
+      { "field": "per_area", "title": "Per 1,000 km²", "format": ".2f" },
+      { "field": "per_pop", "title": "Per 100,000 people", "format": ".2f" }
+    ]
+  },
+
+  "config": { "view": { "stroke": null }, "background": "white" }
+}

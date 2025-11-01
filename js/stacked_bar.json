@@ -1,0 +1,104 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Top 7 LGAs — Emergency Service Mix by Region",
+  "width": 900,
+  "height": 520,
+  "data": { "url": "data/pop_count_LGA.csv" },
+
+  "params": [
+    {
+      "name": "region_toggle",
+      "value": "Metro",
+      "bind": {
+        "input": "select",
+        "options": ["Metro", "Rural"],
+        "name": "Region: "
+      }
+    }
+  ],
+
+  "transform": [
+    {
+      "lookup": "LGA_NAME",
+      "from": {
+        "data": { "url": "data/metro_LGA.csv" },
+        "key": "metro_LGA",
+        "fields": ["metro_LGA"]
+      },
+      "as": ["is_metro"]
+    },
+    { "calculate": "datum.is_metro != null ? 'Metro' : 'Rural'", "as": "region_type" },
+    { "filter": "region_toggle == datum.region_type" },
+
+    {
+      "calculate": "toNumber(datum.fire_station_count) + toNumber(datum.poli_station_count) + toNumber(datum.ambu_station_count)",
+      "as": "total_stations"
+    },
+    {
+      "window": [
+        { "op": "rank", "as": "rank" }
+      ],
+      "sort": [{ "field": "total_stations", "order": "descending" }],
+      "groupby": ["region_type"]
+    },
+    { "filter": "datum.rank <= 7" },
+
+    {
+      "fold": [
+        "fire_station_count",
+        "poli_station_count",
+        "ambu_station_count"
+      ],
+      "as": ["service", "count"]
+    },
+    { "calculate": "toNumber(datum.count)", "as": "count_num" },
+    { "filter": "isValid(datum.count_num)" },
+    {
+      "calculate": "datum.service == 'fire_station_count' ? 1 : datum.service == 'poli_station_count' ? 2 : 3",
+      "as": "stack_order"
+    }
+  ],
+
+  "mark": { "type": "bar" },
+
+  "encoding": {
+    "x": {
+      "field": "LGA_NAME",
+      "type": "nominal",
+      "title": "Top 7 LGAs (by total stations)",
+      "axis": { "labelAngle": -40 },
+      "sort": {
+        "field": "total_stations",
+        "order": "descending"
+      }
+    },
+    "y": {
+      "field": "count_num",
+      "type": "quantitative",
+      "stack": "zero",
+      "title": "Number of Stations"
+    },
+    "color": {
+      "field": "service",
+      "type": "nominal",
+      "scale": {
+        "domain": ["fire_station_count", "poli_station_count", "ambu_station_count"],
+        "range": ["#e2584b", "#4c78a8", "#f2a541"]
+      },
+      "title": "Service Type"
+    },
+    "order": { "field": "stack_order", "type": "ordinal", "sort": "ascending" },
+    "tooltip": [
+      { "field": "LGA_NAME", "title": "LGA" },
+      { "field": "service", "title": "Service" },
+      { "field": "count_num", "title": "Count" },
+      { "field": "total_stations", "title": "Total Stations" }
+    ]
+  },
+
+  "config": {
+    "view": { "stroke": null },
+    "background": "white",
+    "axis": { "labelFontSize": 11, "titleFontSize": 13 }
+  }
+}
