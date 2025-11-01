@@ -1,0 +1,57 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "LGA Distribution by Metric — Bin Proportions",
+  "width": 500,
+  "height": 500,
+  "data": { "url": "data/pop_count_LGA.csv" },
+  "params": [
+    {
+      "name": "metric_toggle",
+      "value": "Stations / 1,000 km²",
+      "bind": {
+        "input": "select",
+        "options": ["Stations / 1,000 km²", "Stations / 100,000 people"],
+        "name": "Select Metric: "
+      }
+    }
+  ],
+  "transform": [
+    { "calculate": "toNumber(datum.station_per_1000km2)", "as": "station_per_1000km2_num" },
+    { "calculate": "toNumber(datum.station_per_100000)", "as": "station_per_100000_num" },
+    { "fold": ["station_per_1000km2_num", "station_per_100000_num"], "as": ["metric", "value"] },
+    {
+      "calculate": "datum.metric === 'station_per_1000km2_num' ? 'Stations / 1,000 km²' : 'Stations / 100,000 people'",
+      "as": "metric_label"
+    },
+    { "filter": "datum.metric_label == metric_toggle" },
+    { "filter": "isValid(datum.value) && isFinite(datum.value)" },
+    {
+      "calculate": "datum.metric_label === 'Stations / 1,000 km²' ? (datum.value < 5 ? '<5' : datum.value < 10 ? '5–10' : datum.value < 25 ? '10–25' : datum.value < 75 ? '25–75' : datum.value < 125 ? '75–125' : '≥125') : (datum.value < 5 ? '<5' : datum.value < 10 ? '5–10' : datum.value < 50 ? '10–50' : datum.value < 150 ? '50–150' : datum.value < 400 ? '150–400' : '≥400')",
+      "as": "bin_label"
+    },
+    {
+      "calculate": "datum.metric_label === 'Stations / 1,000 km²' ? (datum.value < 5 ? 0 : datum.value < 10 ? 1 : datum.value < 25 ? 2 : datum.value < 75 ? 3 : datum.value < 125 ? 4 : 5) : (datum.value < 5 ? 0 : datum.value < 10 ? 1 : datum.value < 50 ? 2 : datum.value < 150 ? 3 : datum.value < 400 ? 4 : 5)",
+      "as": "bin_order"
+    },
+    { "aggregate": [{ "op": "count", "as": "LGA_count" }], "groupby": ["metric_label", "bin_label", "bin_order"] },
+    { "window": [{ "op": "sum", "field": "LGA_count", "as": "total" }], "groupby": ["metric_label"] },
+    { "calculate": "datum.LGA_count / datum.total", "as": "percent" }
+  ],
+  "mark": { "type": "arc", "innerRadius": 50, "stroke": "white" },
+  "encoding": {
+    "theta": { "field": "LGA_count", "type": "quantitative", "title": "Number of LGAs" },
+    "color": {
+      "field": "bin_label",
+      "type": "nominal",
+      "title": "Bin",
+      "scale": { "range": ["#eaf3fb", "#bdd7e7", "#6baed6", "#3182bd", "#08519c", "#001a33"] },
+      "sort": { "op": "min", "field": "bin_order" }
+    },
+    "tooltip": [
+      { "field": "bin_label", "title": "Bin" },
+      { "field": "LGA_count", "title": "LGAs" },
+      { "field": "percent", "title": "Share", "format": ".1%" }
+    ]
+  },
+  "config": { "view": { "stroke": null }, "background": "white" }
+}

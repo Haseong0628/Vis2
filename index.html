@@ -19,7 +19,7 @@
   <pre id="err" style="max-width:1100px;margin:8px auto;color:#c00"></pre>
 
   <script>
-    vegaEmbed('#map', 'js/stacked_bar .json', {actions:false})
+    vegaEmbed('#map', 'js/choropleth.json', {actions:false})
       .catch(e => {
         document.getElementById('err').textContent = e?.message || String(e);
         console.error(e);
