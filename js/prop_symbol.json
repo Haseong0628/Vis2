@@ -7,7 +7,6 @@
     "center": {"expr": "center_to"},
     "scale": {"expr": "zoom_level"}
   },
-  "title": {"text": "Proportional Symbol Map — Emergency Stations by LGA"},
 
   "params": [
     {

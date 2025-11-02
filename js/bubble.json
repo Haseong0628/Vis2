@@ -1,7 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "title": "Emergency Stations by LGA — Metro vs Rural Coverage",
-  "width": 900,
+  "width": 1100,
   "height": 560,
   "data": { "url": "data/pop_count_LGA.csv" },
 

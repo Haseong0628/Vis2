@@ -1,8 +1,7 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "title": "LGA Distribution by Metric — Bin Proportions",
   "width": 500,
-  "height": 500,
+  "height": 570,
   "data": { "url": "data/pop_count_LGA.csv" },
   "params": [
     {

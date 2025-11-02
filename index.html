@@ -3,27 +3,174 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Emergency Services – Choropleth (TopoJSON)</title>
+  <title>Victoria Emergency Stations — Coverage, Capacity & Patterns</title>
 
   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 
   <style>
-    #map { max-width: 1100px; margin: 20px auto; }
+    
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Helvetica Neue",Arial}
+    header,section,footer{padding:24px}
+    header{background:#0f172a;color:#fff}
+    header h1{margin:0 0 6px;font-size:28px}
+    header p{margin:0;color:#cbd5e1}
+    nav{margin-top:8px}
+    nav a{color:#cbd5e1;text-decoration:none;margin-right:14px}
+    nav a:hover{color:#fff;text-decoration:underline}
+    .wrap{max-width:var(--maxw);margin:0 auto}
+    h2{margin:22px 0 6px;font-size:22px}
+    h3{margin:12px 0 6px;font-size:18px;color:var(--muted)}
+    .card{background:var(--card);border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .viz{width:100%;overflow:auto}
+    .note{color:var(--muted);margin:8px 0}
+    .two-col{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:1100px){ .two-col{grid-template-columns:1fr 1fr} }
+    footer{border-top:1px solid #e5e7eb}
+    footer{background: #0f172a;color:#fff}
+    .src-list{font-size:14px;color:var(--muted);padding-left:18px}
+    .src-list a{color:var(--accent);text-decoration:none}
+    .src-list a:hover{text-decoration:underline}
+    pre#error{max-width:var(--maxw);margin:8px auto;color:#c00;white-space:pre-wrap}
   </style>
 </head>
 <body>
-  <h1 style="text-align:center">Emergency Services – Choropleth</h1>
-  <div id="map"></div>
-  <pre id="err" style="max-width:1100px;margin:8px auto;color:#c00"></pre>
+  <header>
+    <div class="wrap">
+      <h1>Victoria’s Emergency Stations — Coverage, Capacity & Patterns</h1>
+      <p>Exploring spatial coverage, service capacity, and patterns across LGAs.</p>
+      <nav>
+        <a href="#overall">Overall spread</a>
+        <a href="#impact">Impact</a>
+        <a href="#patterns">Patterns</a>
+        <a href="#notes">Notes & sources</a>
+      </nav>
+    </div>
+  </header>
 
-  <script>
-    vegaEmbed('#map', 'js/choropleth.json', {actions:false})
-      .catch(e => {
-        document.getElementById('err').textContent = e?.message || String(e);
-        console.error(e);
-      });
+  <main class="wrap">
+
+    <!-- Overall spread -->
+    <section id="overall">
+      <h2>Overall spread</h2>
+      <p class="note">The choropleth and proportional symbol maps together reveal Victoria’s uneven emergency station distribution. Rural LGAs exhibit higher per-population coverage, driven largely by fire stations concentrated in bushfire-prone areas. Metro LGAs, while denser by area, show more balanced but lower per-capita coverage due to population concentration and urban constraints.</p>
+
+      <div class="card">
+        <h3>Distribution of Emergency Stations per Area and Population</h3>
+        <p class="note">The choropleth map reveals a clear rural–metro contrast in emergency station coverage. Rural LGAs in northern and western Victoria show significantly higher station rates per population, reflecting broader fire service presence and lower population densities. In contrast, metro areas around Melbourne display lighter shades, indicating fewer stations per capita but greater density per area due to compact geography.</p>
+        <div id="viz-choropleth" class="viz"></div>
+      </div>
+
+      <div class="card">
+        <h3>Proportional symbol map — Absolute station counts</h3>
+        <p class="note">The proportional symbol map highlights the dominance of fire stations across most of Victoria, especially in rural LGAs where bushfire risk is high. In metro regions, however, the balance shifts — police and ambulance stations become more prominent, reflecting denser populations and diversified service needs. The contrast underscores how station distribution aligns with regional risk profiles and population demands.</p>
+        <div id="viz-prop" class="viz"></div>
+      </div>
+    </section>
+
+    <!-- Impact -->
+    <section id="impact">
+      <h2>Impact</h2>
+      <p class="note">The bubble chart illustrates the trade-off between geographic and population coverage. Rural LGAs cluster tightly, reflecting uniform yet widespread geographic service networks supporting smaller populations. Metro LGAs, however, are more dispersed, indicating greater variability in population density and service allocation — some achieving high per-area density, others serving larger populations with fewer facilities.</p>
+
+      <div class="card">
+        <h3>LGA: Stations per 1,000 km² vs per 100,000 people for Metro and Rural</h3>
+        <p class="note">The bubble chart compares coverage by area and population for each LGA. Rural regions appear tightly clustered near the lower end of both axes, showing consistently broad geographic coverage but smaller populations. Metro areas, in contrast, are more spread out, reflecting greater variability in population density and service concentration.</p>
+        <div id="viz-bubble" class="viz"></div>
+      </div>
+    </section>
+
+    <!-- Patterns -->
+    <section id="patterns">
+      <h2>Patterns</h2>
+      <p class="note">Service composition and bin distribution highlight distinct operational focuses between regions. Metro LGAs show greater variation in station mix (police and ambulance services are more prevalent) while rural LGAs maintain steadier proportions dominated by fire services. The pie charts reinforce these contrasts, with rural regions occupying higher per-area coverage bins and metro LGAs clustering mid-range in per-population metrics, underscoring differing accessibility challenges</p>
+
+      <div class="two-col">
+        <div class="card">
+          <h3>Top 7 LGAs by total station count)</h3>
+          <p class="note">The stacked bar chart shows that metro LGAs display more variation between service types, with differing proportions of fire, police, and ambulance stations. In contrast, rural LGAs follow a more consistent trend across regions, where each service type maintains relatively balanced counts.</p>
+          <div id="viz-stacked" class="viz"></div>
+        </div>
+
+        <div class="card">
+          <h3>LGA distribution by metric</h3>
+          <p class="note">The pie charts compare how LGAs are distributed across coverage bins by area and population. The per area chart shows broader coverage in rural regions, while the per population chart clusters more in mid-range bins, reflecting denser urban areas. Together, they highlight contrasting patterns in geographic versus population-based accessibility.</p>
+          <div id="viz-pie" class="viz"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notes & sources -->
+
+
+    <pre id="error"></pre>
+  </main>
+
+<footer>
+  <section id="notes">
+    <h2>Ha Seong Kim — FIT3179 Data Visualisation</h2>
+    <div class="card">
+      <h3>Remarks</h3>
+      <p class="note">• AI-assisted text generation was used to refine grammar and clarity across descriptions.</p>
+      <p class="note">• Datasets were cleaned and processed using QGIS for consistency and accurate spatial representation.</p>
+    </div>
+
+    <div class="card">
+      <h3>Sources</h3>
+      <ul class="src-list">
+        <li>
+          LGA polygons (TopoJSON): 
+          <a href="https://discover.data.vic.gov.au/dataset/vicmap-admin-local-government-area-lga-polygon-aligned-to-property" 
+             target="_blank" rel="noopener">
+             Vicmap Admin — Local Government Area Polygon
+          </a>
+        </li>
+        <li>
+          Fire stations (rural & metro): 
+          <a href="https://digital.atlas.gov.au/datasets/digitalatlas::rural-country-fire-service-facilities/about" 
+             target="_blank" rel="noopener">Rural Country Fire Service Facilities</a> | 
+          <a href="https://digital.atlas.gov.au/datasets/digitalatlas::metro-fire-facilities/about" 
+             target="_blank" rel="noopener">Metropolitan Fire Facilities</a>
+        </li>
+        <li>
+          Police stations: 
+          <a href="https://digital.atlas.gov.au/datasets/digitalatlas::police-stations/about" 
+             target="_blank" rel="noopener">Australian Police Stations Dataset</a>
+        </li>
+        <li>
+          Ambulance stations: 
+          <a href="https://digital.atlas.gov.au/datasets/323bff87ddc944d1938c2fcc006d5707_0/explore" 
+             target="_blank" rel="noopener">Ambulance Facilities (National Dataset)</a>
+        </li>
+        <li>
+          Population data (regional estimates): 
+          <a href="https://www.abs.gov.au/statistics/people/population/regional-population/latest-release" 
+             target="_blank" rel="noopener">Australian Bureau of Statistics — Regional Population</a>
+        </li>
+      </ul>
+      <p class="note">Last updated: <span id="updated"></span></p>
+    </div>
+  </section>
+</footer>
+
+
+<script>
+  const el = document.getElementById('updated');
+  if (el) el.textContent = new Date().toISOString().slice(0,10);
+
+  const opts = { actions: false };
+  const showErr = e => {
+    const out = document.getElementById('error');
+    if (out) out.textContent += (e?.message || String(e)) + "\n";
+    console.error(e);
+  };
+    vegaEmbed('#viz-choropleth', 'js/choropleth.json',  opts).catch(showErr);
+    vegaEmbed('#viz-prop',       'js/prop_symbol.json', opts).catch(showErr);
+    vegaEmbed('#viz-bubble',     'js/bubble.json',      opts).catch(showErr);
+    vegaEmbed('#viz-stacked',    'js/stacked_bar.json', opts).catch(showErr);
+    vegaEmbed('#viz-pie',        'js/pie.json',         opts).catch(showErr);
   </script>
 </body>
 </html>

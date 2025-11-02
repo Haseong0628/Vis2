@@ -7,7 +7,6 @@
     "center": {"expr": "center_to"},
     "scale": {"expr": "zoom_level"}
   },
-  "title": { "text": "Victoria's Emergency Stations per Area and Population" },
   "data": {
     "url": "js/VIC_shape_LGA.json",
     "format": { "type": "topojson", "feature": "LGA_POLYGON" }
